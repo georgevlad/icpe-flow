@@ -55,6 +55,8 @@ Deschide [http://127.0.0.1:8080](http://127.0.0.1:8080). Nu se montează volume.
 
 ## Demonstrația de aproximativ cinci minute
 
+Secțiunea **Ajutor**, din meniul lateral sau din partea de jos a paginii, explică pe scurt dosarul, documentele, pașii de lucru, predarea și resetarea. Apasă pe o întrebare pentru detalii; pe telefon, meniul se deschide din butonul de sus.
+
 1. Deschide dosarul **Colibița** și consultă fluxul, sarcina și documentele. Celelalte lucrări sunt exemple de context.
 2. Compară cerințele și acceptă modificarea demonstrativă: apare revizia 02 și sarcina de implementare.
 3. Consemnează implementarea, apoi înregistrează testul. Se deschide observația privind eticheta afișată.

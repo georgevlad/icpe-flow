@@ -20,3 +20,20 @@
 @media(max-width:480px){.demo-banner{font-size:7px;max-width:165px}.sidebar-bottom>p{font-size:12px}.page-description{font-size:12px}.project-category{font-size:9px}.project-topline .badge{font-size:10px}.project-topline .mono{font-size:10px}.featured-content>p:not(.eyebrow){font-size:12px}.project-meta{font-size:10px}.context-project h3{font-size:12px}.context-project p{font-size:10px}.context-project .mono{font-size:9px}.context-tag,.context-tag small{font-size:7px}.featured-footer>span:first-child{font-size:7px}.featured-footer{font-size:8px}.overview-footer{font-size:9px}.dossier-heading .page-description{font-size:12px}.dossier-code{font-size:7px}.tabs{gap:15px}.tabs>button{font-size:11px}.next-action>.button{font-size:12px}.change-preview strong{font-size:11px}.change-preview div>span{font-size:8px}.next-action>p{font-size:12px}.revision-route{font-size:10px}.trace-strip{font-size:8px;gap:6px}.package-progress>span{max-width:none}.dossier-footer,.dossier-footer button{font-size:8px}.doc-state{font-size:9px;max-width:90px}.doc-row-title strong{font-size:11px}.doc-row-title small{font-size:9px}.doc-icon{display:none}.support-docs strong{font-size:12px}.support-docs span{font-size:10px}.modal-intro{font-size:13px}.request-context strong{font-size:12px}.request-context div>span{font-size:9px}.revision-column h3{font-size:12px}.comparison-label{font-size:9px}.comparison-label .badge{font-size:9px}.state-label{font-size:12px}.revision-column>.small{font-size:10px}.info-callout p,.effect-list li{font-size:12px}.document-lead,.document-section p{font-size:12px}.document-section h3{font-size:14px}td,th{font-size:11px}.document-meta .badge{font-size:10px}.document-notice{font-size:9px}.document-end{font-size:9px}.full .package-label strong{font-size:11px}.full .package-label small{font-size:10px}.full .small-button{font-size:10px}.complete-word{font-size:9px}.guide-steps li{font-size:12px}.guide-questions p,.guide>.small{font-size:12px}.timeline-date{font-size:9px}.timeline h3{font-size:13px}.timeline p{font-size:12px}}
 @media(max-width:760px){.demo-banner{font-size:9px;max-width:205px;column-gap:5px;row-gap:0}.demo-banner b{display:inline}.brand strong{font-size:18px}}
 
+/* Help topics stay compact and can be opened with a mouse or keyboard. */
+.help-topics{display:grid;gap:10px}
+.help-topics details{border:1px solid var(--line);border-radius:8px;background:#fafbf7}
+.help-topics summary{display:flex;align-items:center;gap:9px;padding:15px 16px;cursor:pointer;list-style:none;font-size:13px;font-weight:650;line-height:1.5}
+.help-topics summary::-webkit-details-marker{display:none}
+.help-topics summary:hover{color:var(--red)}
+.help-topics summary:focus-visible{outline:3px solid #c66152;outline-offset:3px;border-radius:8px}
+.help-topics summary svg{color:var(--muted);transition:transform .18s}
+.help-topics details[open] summary svg{transform:rotate(90deg)}
+.help-topic-content{padding:0 16px 16px;font-size:13px;line-height:1.75;color:#657e51}
+.help-tabs{display:grid;gap:12px;margin:14px 0 0}
+.help-tabs dt{color:var(--ink);font-weight:650}
+.help-tabs dd{margin:3px 0 0}
+.help-topic-content ol{margin:0;padding-left:20px}
+.help-topic-content li+li{margin-top:9px}
+.help-note{margin-top:18px;font-size:12px;line-height:1.7;color:var(--muted)}
+
