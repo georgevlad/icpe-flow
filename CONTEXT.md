@@ -1,0 +1,89 @@
+# Contextul demonstrației ICPE Bistrița
+
+## Scop și context
+
+Acest proiect este un proof of concept local, vizual și interactiv, pentru o discuție a utilizatorului cu tatăl său despre coordonarea documentelor unei lucrări. ICPE Bistrița este compania tatălui utilizatorului; acesta a menționat că unele procese interne s-ar putea optimiza. Nu avem încă documente reale, probleme validate sau o inventariere a instrumentelor existente. Demonstrația oferă un exemplu care poate fi discutat și corectat împreună, fără a afirma că reproduce procedurile firmei ori că un sistem nou este necesar.
+
+Proiectul este independent de Scriptica și se află în `D:\codex\icpe-poc`. Planul a fost aprobat de utilizator înainte de începerea implementării.
+
+## Informații publice, ipoteze și necunoscute
+
+Cercetarea anterioară furnizată de utilizator a identificat activități de proiectare, execuție și punere în funcțiune pentru instalații de tratare și epurare a apei; tablouri de automatizare personalizate și testarea lor înainte de livrare; laborator de analize fizico-chimice; cercetare cu parteneri și documentație tehnică; soluții PLC și SCADA. Acestea justifică numai tema aleasă. Nu au fost reverificate în această etapă de implementare.
+
+Surse de orientare furnizate:
+
+- [Contact ICPE Bistrița](https://www.icpebn.ro/ro/contact.html)
+- [Tratarea apelor](https://www.icpebn.ro/ro/domenii-activitate/tratare-ape)
+- [Execuție — electrice și automatizări](https://www.icpebn.ro/ro/domenii-activitate/electrice-si-automatizari/18-executie.html)
+- [Analize fizico-chimice](https://www.icpebn.ro/ro/domenii-activitate/analize-fizico-chimice)
+- [Proiect 6 PTE 2025](https://www.icpebn.ro/ro/pagini/84-proiect-6-pte-2025.html)
+
+Ipoteze demonstrative: un dosar reunește cerințe, documente, revizii, sarcini, rezultate de test și pachetul predat; coordonarea poate fi explicată printr-un singur flux; denumirile acceptate pentru două stări pot constitui o modificare documentată. Rolurile, datele, lucrările, beneficiarii, confirmările și regulile de trecere sunt fictive.
+
+Necunoscute: procesul real, sistemele deja folosite, sursele documentelor, responsabilitățile și autoritatea de aprobare, cerințele contractuale, controlul reviziilor, semnăturile și valoarea juridică a confirmărilor, necesitatea și utilitatea unui asemenea instrument. Nu presupunem lipsa digitalizării, dificultăți interne sau valabilitatea actuală a certificărilor.
+
+## Scenariul și referințele
+
+La cererea utilizatorului, denumirea afișată a lucrării este acum „Colibița”, în interfață, documentele generate, seed și istoricul persistent. Numele localității este folosit numai pentru scenariul fictiv; nu indică o lucrare ori un beneficiar real. Referința originală de mai jos este păstrată nemodificată și folosește denumirea „Valea Exemplu”. Progresul demonstrației a fost păstrat la redenumire.
+
+Sursa principală, citită integral și păstrată, este [Simulare-dosar-tablou.md](Simulare-dosar-tablou.md). Scenariul descrie modernizarea automatizării stației de tratare „Colibița”, pentru beneficiarul fictiv „Operator Apă Exemplu”: dosarul `DEMO-L-001`, echipamentul `DEMO-TA-001`.
+
+Beneficiarul cere afișarea distinctă a stărilor „Funcționare” și „Indisponibil” pentru P-01. Modificarea acceptată produce revizia 02. Testul găsește o etichetă veche; remedierea are dovadă demonstrativă, iar o retestare separată închide observația. Fișa de test și instrucțiunile finale sunt adăugate explicit la pachet înaintea predării. Eticheta veche „Oprit”, necesară comparației, este o completare fictivă de interfață, nu un detaliu din documentul de referință.
+
+Cele șase documente principale sunt fișa de deschidere `DEMO-F01`, cererea și decizia de modificare `DEMO-MOD-001`, borderoul `DEMO-B01`, fișa de test `DEMO-TEST-001`, lista de predare `DEMO-PRED-001` și procesul-verbal `DEMO-PV-001`. Cerințele `DEMO-CER-001`, lista semnalelor `DEMO-LS-001` și instrucțiunile operatorului `DEMO-MAN-001` sunt documente suport demonstrative.
+
+## Domeniu și limite
+
+Plan aprobat și implementat: vedere de ansamblu cu trei lucrări fictive, un singur dosar complet interactiv, flux vizual, sarcini, documente consultabile în panouri, comparația reviziilor, acțiuni cu ordine validată, istoric, persistență locală și resetare. Celelalte lucrări sunt doar exemple de context.
+
+Exclusiv date fictive și identificatori `DEMO`. Fără autentificare reală, integrări, AI, servicii plătite, publicare online, configurator de fluxuri, notificări externe sau administrare de utilizatori. Nu există comenzi pentru instalații, parametri tehnici de execuție, afirmații de conformitate ori validare tehnică. Un click demonstrativ nu constituie semnătură juridică. PoC-ul nu înlocuiește ERP, LIMS, PLM, CAD sau SCADA.
+
+## Direcție vizuală și branding
+
+Interfață în română, cu suprafețe deschise, text antracit, accente roșii inspirate din siglă, tipografie îngrijită, spațiere generoasă și animații discrete. Fluxul și legăturile dintre documente, sarcini și rezultate sunt elementele centrale. Sigla existentă `logo.png` este păstrată și copiată stabil în `public/logo.png`, cu proporțiile păstrate. Fonturile DM Sans și Manrope sunt instalate prin pachetele `@fontsource-variable` și servite local, fără cereri către servicii de fonturi. Mențiunea permanentă este „PoC pentru discuție • Date și proceduri fictive”. Brandingul indică destinatarul demonstrației, fără a pretinde adoptare oficială.
+
+## Arhitectură și decizii
+
+React + TypeScript + Vite pentru interfață; modulul HTTP nativ Node.js pentru API-ul local restrâns la scenariu. Datele seed din `server/seed.mjs` sunt separate de fișierul JSON modificabil `data/state.json`, pentru persistență și resetare reproductibilă. API-ul validează ordinea acțiunilor și condițiile de predare; interfața explică starea, iar documentele sunt derivate din aceeași stare. Conflictele de acțiune răspund cu HTTP 409 și determină resincronizarea interfeței cu starea API-ului. Nu sunt necesare bază de date, ORM sau infrastructură de producție.
+
+Este necesar Node.js 22.12 sau mai nou; versiunea folosită la verificare a fost 22.14. După `npm install`, o singură comandă `npm run dev` pornește interfața la `http://127.0.0.1:5173` și API-ul la `http://127.0.0.1:3101`, ambele legate de interfața locală. Portul API 3101 a fost ales deoarece 3001 era ocupat. Vite redirecționează `/api` către 3101. Dacă se schimbă `API_PORT`, trebuie actualizate și destinațiile proxy din `vite.config.ts`.
+
+Starea inițială pornește după deschidere și proiectare, la modificarea în așteptare. Revizia 01 rămâne referință istorică. Instrucțiunile rev. 02 devin disponibile pentru verificare după implementare, însă includerea lor în pachet rămâne o acțiune separată. Rezultatul testului inițial se păstrează distinct de retestare. Pachetul final păstrează reviziile transmise.
+
+## Implementat și simulat
+
+Sunt implementate consultarea celor șase documente principale și a celor trei suport, comparația cerințelor rev. 01/02, acceptarea modificării, sarcina și consemnarea implementării, testul inițial, observația, remedierea cu dovadă simulată, retestarea, completarea explicită a pachetului, predarea cu păstrarea reviziilor transmise, istoricul, persistența și resetarea. Pachetele incomplete și acțiunile în ordine greșită sunt respinse de API. Documentele viitoare sunt marcate proiecte și nu consemnează rezultate înainte de acțiunea corespunzătoare.
+
+Prin natura demonstrației, deciziile, implementarea tehnică, testele, dovezile, confirmările și predarea sunt simulate. Nu există introducere liberă a rezultatelor de test, încărcare de fișiere sau descărcare reală a unui pachet. Reviziile vechi CER, LS și MAN sunt reprezentate prin extrase consultabile; aplicația nu gestionează un istoric complet de fișiere. Software-ul operează efectiv asupra stării demonstrației, iar documentele și statusurile reflectă aceste schimbări.
+
+## Stadiu, verificări și probleme cunoscute
+
+Stadiu: aplicația este implementată și verificată cap-coadă; starea locală a fost resetată la seed și este pregătită pentru demonstrație. Sursa principală și cerințele originale au fost citite integral. Fișierele existente de referință și sigla sunt păstrate.
+
+Verificări efectuate:
+
+- `npm test`: toate cele 8 teste Node au trecut inclusiv la verificarea finală, pentru regulile fluxului, persistență și comportamentul API-ului.
+- `npm run build`: compilarea TypeScript și build-ul Vite au trecut la verificarea finală a versiunii finisate, cu fonturile locale incluse.
+- `npm run test:browser`: cele 2 teste Playwright cu Microsoft Edge instalat local au trecut; acoperă demonstrația completă și comportamentul mobil. Configurația pornește serverul prin `webServer` ori îl reutilizează prin `reuseExistingServer`.
+- Browser desktop 1440 × 1000 și mobil 390 × 844: cele șase documente principale sunt consultabile, comparația reviziilor este lizibilă și nu există depășire orizontală pe mobil.
+- Au fost parcurse toate acțiunile până la predare și cele 10 înregistrări ale istoricului; reîncărcarea înainte de retestare și după predare păstrează starea; resetarea revine complet la seed.
+- Nu au fost observate erori JavaScript sau cereri externe în traseul browser verificat. Un conflict HTTP 409 a fost verificat împreună cu resincronizarea interfeței.
+- Capturile locale de verificare se află în `artifacts/`, director exclus din Git. Browserul integrat CUA nu a pornit din cauza unei erori de sandbox; verificarea s-a realizat cu Edge headless prin Playwright și capturi inspectate, fără a pretinde o verificare prin CUA.
+
+Finisaje efectuate după verificare: contrast și dimensiuni de text îmbunătățite, meniu de resetare utilizabil pe mobil, resincronizare după conflicte, observație formulată la trecut după remediere și extrasul manualului rev. 01 păstrat vizibil.
+
+Limite cunoscute: un singur scenariu, reguli intenționat specifice demonstrației, date JSON pentru un proces local, fără conturi sau administrarea accesului. Nu este pregătită pentru date de producție, utilizatori simultani sau validări inginerești. Verificarea nu reprezintă o matrice exhaustivă de compatibilitate cu browsere ori o certificare WCAG.
+
+## Următorii pași și validarea cu firma
+
+Verificarea finală este completă. Următorul pas este prezentarea demonstrației, discuția cu tatăl utilizatorului și validarea scenariului cu firma, înainte de orice extindere a funcționalităților.
+
+Întrebări pentru discuția cu tatăl utilizatorului și cu firma:
+
+- Ce parte seamănă cu o lucrare reală și ce trebuie corectat?
+- Unde se află astăzi documentele, reviziile, testele și confirmările?
+- Ce pași cer căutări, mesaje repetate sau rescriere și ce sistem îi acoperă deja?
+- Cine poate accepta o modificare, publica o revizie, închide o observație sau autoriza predarea?
+- Ce document real anonimizat ar permite corectarea scenariului?
+- Există o nevoie confirmată care justifică un pas următor?
+
