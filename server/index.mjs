@@ -1,14 +1,20 @@
 import { pathToFileURL } from 'node:url';
+import { stat } from 'node:fs/promises';
+import { join } from 'node:path';
 import { createApiServer } from './app.mjs';
 import { createStore } from './store.mjs';
 
-export async function startServer({ port = Number(process.env.API_PORT ?? 3101), statePath, logError } = {}) {
-  if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error('API_PORT trebuie să fie un port valid.');
+export async function startServer({ port = Number(process.env.PORT ?? process.env.API_PORT ?? 3101), host = '127.0.0.1', staticDirectory, statePath, logError } = {}) {
+  if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error('PORT sau API_PORT trebuie să fie un port valid.');
+  if (staticDirectory) {
+    const index = await stat(join(staticDirectory, 'index.html')).catch(() => null);
+    if (!index?.isFile()) throw new Error('Interfața construită lipsește. Rulează npm run build înainte de npm start.');
+  }
   const store = await createStore({ statePath });
-  const server = createApiServer({ store, logError });
+  const server = createApiServer({ store, staticDirectory, logError });
   await new Promise((resolve, reject) => {
     server.once('error', reject);
-    server.listen(port, '127.0.0.1', resolve);
+    server.listen(port, host, resolve);
   });
   return { server, store, port: server.address().port };
 }

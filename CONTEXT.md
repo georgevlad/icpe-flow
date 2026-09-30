@@ -76,6 +76,16 @@ Limite cunoscute: un singur scenariu, reguli intenționat specifice demonstrați
 
 ## Următorii pași și validarea cu firma
 
+### Pregătirea pentru Railway — 30 septembrie 2026
+
+La cererea utilizatorului, proiectul este acum pregătit pentru deploy demonstrativ pe Railway din repository-ul `georgevlad/icpe-flow`, ramura `main`. Această etapă pregătește sursele; serviciul urmează să fie creat în contul Railway. Cerința explicită este fără persistență între deploy-uri.
+
+Un Dockerfile cu build în două etape construiește React/Vite și livrează doar serverul Node.js, interfața construită și `package.json`. `npm start` servește interfața și API-ul pe același port, cu adresă `0.0.0.0`, prioritate pentru variabila `PORT`, verificarea existenței build-ului și oprire la SIGTERM/SIGINT. Endpoint-ul `/api/health` poate fi folosit pentru healthcheck-ul Railway. Sunt servite doar fișiere din `dist/`, cu tipurile corecte pentru JavaScript, CSS, imagini și fonturi; fișierele sursă și datele JSON nu sunt expuse ca fișiere publice.
+
+Nu sunt necesare volum, bază de date, chei API ori CORS. `data/state.json` rămâne pe discul temporar al serviciului și este exclus din Git și Docker. Fiecare deploy nou începe din seed. Există un singur scenariu comun tuturor vizitatorilor, fără autentificare; se păstrează o singură replică. Pornirea locală prin Vite rămâne disponibilă pentru dezvoltare.
+
+Verificarea pentru deploy: cele 12 teste Node, build-ul TypeScript/Vite și cele 2 teste browser în fiecare mod (serverul de deploy și Vite pentru dezvoltare) au trecut. Testele verifică inclusiv servirea interfeței, asset-urile și fonturile locale, fișierele private inaccesibile prin HTTP, prioritatea `PORT` și starea inițială la două deploy-uri simulate. Starea locală a revenit la seed după testele browser. Motorul Docker local este oprit, astfel încât imaginea Docker nu a fost construită sau rulată local; serverul folosit în container a fost verificat direct cu Node.js și în browser. Nu s-a făcut încă deploy în Railway.
+
 Verificarea finală este completă. Următorul pas este prezentarea demonstrației, discuția cu tatăl utilizatorului și validarea scenariului cu firma, înainte de orice extindere a funcționalităților.
 
 Întrebări pentru discuția cu tatăl utilizatorului și cu firma:

@@ -1,5 +1,6 @@
 import { createServer } from 'node:http';
 import { WorkflowError } from './workflow.mjs';
+import { createStaticHandler } from './static.mjs';
 
 function send(response, status, data) {
   response.writeHead(status, {
@@ -33,17 +34,21 @@ async function readAction(request) {
   return payload.type;
 }
 
-export function createApiServer({ store, logError = (error) => console.error('API:', error) }) {
+export function createApiServer({ store, staticDirectory, logError = (error) => console.error('API:', error) }) {
+  const serveStatic = staticDirectory ? createStaticHandler(staticDirectory) : null;
   return createServer(async (request, response) => {
     try {
       const pathname = new URL(request.url, 'http://127.0.0.1').pathname;
-      if (pathname === '/api/state' && request.method === 'GET') {
+      if (pathname === '/api/health' && request.method === 'GET') {
+        send(response, 200, { status: 'ok' });
+      } else if (pathname === '/api/state' && request.method === 'GET') {
         send(response, 200, await store.getState());
       } else if (pathname === '/api/actions' && request.method === 'POST') {
         send(response, 200, await store.dispatch(await readAction(request)));
       } else if (pathname === '/api/reset' && request.method === 'POST') {
         send(response, 200, await store.reset());
       } else {
+        if (!pathname.startsWith('/api/') && pathname !== '/api' && await serveStatic?.(request, response, pathname)) return;
         send(response, 404, { error: 'Ruta solicitată nu există.' });
       }
     } catch (error) {
