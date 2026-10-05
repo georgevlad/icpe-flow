@@ -4,7 +4,7 @@ import { startServer } from './index.mjs';
 const staticDirectory = fileURLToPath(new URL('../dist/', import.meta.url));
 
 try {
-  const { server, port } = await startServer({ host: '0.0.0.0', staticDirectory });
+  const { server, port } = await startServer({ host: '0.0.0.0', staticDirectory, statePath: process.env.DEMO_STATE_PATH });
   console.log(`Demonstrație ICPE: http://0.0.0.0:${port}`);
   const shutdown = () => {
     const timeout = setTimeout(() => server.closeAllConnections(), 10_000);

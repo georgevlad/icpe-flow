@@ -12,6 +12,9 @@ import { createApiServer } from '../server/app.mjs';
 const time = '2026-10-08T10:00:00.000Z';
 const stepsToPreparation = ['accept-change', 'implement', 'run-test', 'remediate', 'retest'];
 const completeSteps = [...stepsToPreparation, 'attach-test', 'attach-manual', 'handover'];
+const serviceSteps = ['service-classify', 'service-schedule', 'service-record-visit', 'service-verify', 'service-close'];
+const offerSteps = ['offer-review', 'offer-clarify', 'offer-draft', 'offer-feedback', 'offer-revise', 'offer-accept', 'offer-start'];
+const labSteps = ['lab-plan', 'lab-collect', 'lab-receive', 'lab-analyze', 'lab-review', 'lab-issue'];
 
 async function temporaryState(t) {
   const directory = await mkdtemp(join(tmpdir(), 'icpe-demo-test-'));
@@ -44,6 +47,130 @@ test('complete demonstration preserves revision history and exact delivered pack
   assert.deepEqual(seed, createInitialState());
   assert.equal(SEED_STATE.revision, 1);
   assert.ok(Object.isFrozen(SEED_STATE.attachments));
+});
+
+test('post-handover intervention is independent, ordered, and keeps a traceable report', () => {
+  let state = createInitialState();
+  assert.throws(() => applyAction(state, 'service-record-visit', time), { status: 409 });
+  for (const action of serviceSteps) state = applyAction(state, action, time);
+  assert.equal(state.service.stage, 'closed');
+  assert.equal(state.stage, 'change', 'the existing project is untouched');
+  assert.equal(state.history.length, 2);
+  assert.deepEqual(state.service.history.map(({ action }) => action), ['service-report', ...serviceSteps]);
+  assert.equal(new Set(state.service.history.map(({ id }) => id)).size, 6);
+  assert.match(state.service.intervention.finding, /Actualizarea datelor/);
+  assert.equal(state.service.verification.by, 'Persoana F');
+  assert.equal(state.service.clientConfirmation.at, time);
+  for (const action of serviceSteps) assert.throws(() => applyAction(state, action, time), { status: 409 });
+  assert.throws(() => applyAction(state, 'service-unknown', time), { status: 400 });
+});
+
+test('inquiry becomes an accepted offer and a traceable project kickoff', () => {
+  let state = createInitialState();
+  assert.throws(() => applyAction(state, 'offer-draft', time), { status: 409 });
+  for (const action of offerSteps) state = applyAction(state, action, time);
+  assert.equal(state.offer.stage, 'started');
+  assert.equal(state.offer.versions.length, 2);
+  assert.equal(state.offer.versions[0].amountLei, 48_000);
+  assert.equal(state.offer.versions[1].amountLei, 52_000);
+  assert.equal(state.offer.versions[0].scope.length + 1, state.offer.versions[1].scope.length);
+  assert.equal(state.offer.accepted.revision, '02');
+  assert.deepEqual(state.offer.project, {
+    id: 'DEMO-L-004', at: time, coordinator: 'Persoana G', acceptedOfferRevision: '02',
+    handoffItems: ['Solicitarea DEMO-SOL-001', 'Clarificările consemnate', 'DEMO-OF-001 rev. 02 acceptată'],
+    openPoint: 'Lista finală de semnale se confirmă la deschiderea lucrării.',
+  });
+  assert.deepEqual(state.offer.history.map(({ action }) => action), ['offer-request', ...offerSteps]);
+  assert.equal(state.stage, 'change');
+  assert.equal(state.service.stage, 'reported');
+  for (const action of offerSteps) assert.throws(() => applyAction(state, action, time), { status: 409 });
+  assert.throws(() => applyAction(state, 'offer-unknown', time), { status: 400 });
+});
+
+test('one identified sample moves through analysis and a reviewed report', () => {
+  let state = createInitialState();
+  assert.throws(() => applyAction(state, 'lab-analyze', time), { status: 409 });
+  for (const action of labSteps) state = applyAction(state, action, time);
+  assert.equal(state.lab.stage, 'issued');
+  assert.equal(state.lab.sample.id, 'DEMO-PROBA-001');
+  assert.equal(state.lab.receipt.receivedBy, 'Persoana I');
+  assert.equal(state.lab.review.reviewedBy, 'Persoana J');
+  assert.deepEqual(state.lab.report, {
+    id: 'DEMO-RAP-LAB-001', revision: '01', at: time,
+    recipient: 'Operator Apă Exemplu', sampleId: 'DEMO-PROBA-001',
+    results: [{ indicator: 'pH', value: '7,2', unit: '—' }, { indicator: 'Conductivitate', value: '540', unit: 'µS/cm' }],
+  });
+  assert.notStrictEqual(state.lab.report.results, state.lab.analysis.results, 'the issued report has its own snapshot');
+  assert.deepEqual(state.lab.history.map(({ action }) => action), ['lab-request', ...labSteps]);
+  assert.equal(state.stage, 'change');
+  assert.equal(state.service.stage, 'reported');
+  assert.equal(state.offer.stage, 'received');
+  for (const action of labSteps) assert.throws(() => applyAction(state, action, time), { status: 409 });
+  assert.throws(() => applyAction(state, 'lab-unknown', time), { status: 400 });
+});
+
+test('valid version 1 progress migrates without losing the project; service persists and resets', async (t) => {
+  const statePath = await temporaryState(t);
+  let oldState = createInitialState();
+  oldState = applyAction(oldState, 'accept-change', time);
+  delete oldState.service;
+  delete oldState.offer;
+  delete oldState.lab;
+  oldState.schemaVersion = 1;
+  await writeFile(statePath, JSON.stringify(oldState), 'utf8');
+  const store = await createStore({ statePath, now: () => new Date(time) });
+  const upgraded = await store.getState();
+  assert.equal(upgraded.schemaVersion, 4);
+  assert.equal(upgraded.stage, 'implementation');
+  assert.equal(upgraded.service.stage, 'reported');
+  assert.equal(upgraded.offer.stage, 'received');
+  assert.equal(upgraded.lab.stage, 'requested');
+  assert.deepEqual(JSON.parse(await readFile(statePath, 'utf8')), upgraded);
+  await store.dispatch('service-classify');
+  const reloaded = await createStore({ statePath });
+  assert.equal((await reloaded.getState()).service.stage, 'classified');
+  assert.equal((await reloaded.getState()).stage, 'implementation');
+  assert.deepEqual(await reloaded.reset(), createInitialState());
+});
+
+test('version 2 service progress migrates and remains independent of offer progress', async (t) => {
+  const statePath = await temporaryState(t);
+  let oldState = applyAction(createInitialState(), 'service-classify', time);
+  delete oldState.offer;
+  delete oldState.lab;
+  oldState.schemaVersion = 2;
+  await writeFile(statePath, JSON.stringify(oldState), 'utf8');
+  const store = await createStore({ statePath, now: () => new Date(time) });
+  const upgraded = await store.getState();
+  assert.equal(upgraded.schemaVersion, 4);
+  assert.equal(upgraded.service.stage, 'classified');
+  assert.equal(upgraded.offer.stage, 'received');
+  assert.equal(upgraded.lab.stage, 'requested');
+  assert.deepEqual(JSON.parse(await readFile(statePath, 'utf8')), upgraded);
+  await store.dispatch('offer-review');
+  const reloaded = await createStore({ statePath });
+  assert.equal((await reloaded.getState()).offer.stage, 'clarification');
+  assert.equal((await reloaded.getState()).service.stage, 'classified');
+});
+
+test('version 3 offer progress migrates without changing the existing scenarios', async (t) => {
+  const statePath = await temporaryState(t);
+  let oldState = applyAction(createInitialState(), 'offer-review', time);
+  oldState = applyAction(oldState, 'service-classify', time);
+  delete oldState.lab;
+  oldState.schemaVersion = 3;
+  await writeFile(statePath, JSON.stringify(oldState), 'utf8');
+  const store = await createStore({ statePath, now: () => new Date(time) });
+  const upgraded = await store.getState();
+  assert.equal(upgraded.schemaVersion, 4);
+  assert.equal(upgraded.offer.stage, 'clarification');
+  assert.equal(upgraded.service.stage, 'classified');
+  assert.equal(upgraded.lab.stage, 'requested');
+  assert.deepEqual(JSON.parse(await readFile(statePath, 'utf8')), upgraded);
+  await store.dispatch('lab-plan');
+  const reloaded = await createStore({ statePath });
+  assert.equal((await reloaded.getState()).lab.stage, 'planned');
+  assert.equal((await reloaded.getState()).offer.stage, 'clarification');
 });
 
 test('premature transitions, duplicate actions and post-delivery changes are blocked', () => {

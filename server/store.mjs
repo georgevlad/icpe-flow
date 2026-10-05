@@ -22,7 +22,9 @@ export async function persistState(path, state) {
 export async function createStore({ statePath = DEFAULT_STATE_PATH, now = () => new Date(), persist = persistState } = {}) {
   let state;
   try {
-    state = validatePersistedState(JSON.parse(await readFile(statePath, 'utf8')), createInitialState());
+    const saved = JSON.parse(await readFile(statePath, 'utf8'));
+    state = validatePersistedState(saved, createInitialState());
+    if (saved.schemaVersion !== state.schemaVersion) await persist(statePath, state);
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
     state = createInitialState();

@@ -1,3 +1,7 @@
+import { applyServiceAction } from './service.mjs';
+import { applyOfferAction } from './offer.mjs';
+import { applyLabAction } from './laboratory.mjs';
+
 export class WorkflowError extends Error {
   constructor(message, status = 409) {
     super(message);
@@ -101,6 +105,9 @@ const actions = {
 };
 
 export function applyAction(current, type, at = new Date().toISOString()) {
+  if (typeof type === 'string' && type.startsWith('service-')) return applyServiceAction(current, type, at);
+  if (typeof type === 'string' && type.startsWith('offer-')) return applyOfferAction(current, type, at);
+  if (typeof type === 'string' && type.startsWith('lab-')) return applyLabAction(current, type, at);
   if (typeof type !== 'string' || !Object.hasOwn(actions, type)) {
     throw new WorkflowError('Acțiune necunoscută.', 400);
   }
@@ -123,18 +130,63 @@ export function applyAction(current, type, at = new Date().toISOString()) {
 
 // Replay makes a damaged or manually inconsistent state fail visibly on startup.
 export function validatePersistedState(value, initialState) {
-  if (!value || value.schemaVersion !== 1 || !Array.isArray(value.history)) {
+  if (!value || ![1, 2, 3, 4].includes(value.schemaVersion) || !Array.isArray(value.history)) {
     throw new Error('Fișierul de stare are un format neacceptat.');
   }
-  let expected = initialState;
+  const savedVersion = value.schemaVersion;
+  let expected = structuredClone(initialState);
+  expected.schemaVersion = savedVersion;
+  if (savedVersion < 2) delete expected.service;
+  if (savedVersion < 3) delete expected.offer;
+  if (savedVersion < 4) delete expected.lab;
   for (const event of value.history.slice(initialState.history.length)) {
     if (!event || typeof event.at !== 'string' || !Number.isFinite(Date.parse(event.at))) {
       throw new Error('Istoricul din fișierul de stare nu este valid.');
     }
     expected = applyAction(expected, event.action, event.at);
   }
+  if (savedVersion >= 2) {
+    if (!value.service || !Array.isArray(value.service.history)) {
+      throw new Error('Istoricul intervenției nu este valid.');
+    }
+    for (const event of value.service.history.slice(initialState.service.history.length)) {
+      if (!event || typeof event.at !== 'string' || !Number.isFinite(Date.parse(event.at))) {
+        throw new Error('Istoricul intervenției nu este valid.');
+      }
+      expected = applyAction(expected, event.action, event.at);
+    }
+  }
+  if (savedVersion >= 3) {
+    if (!value.offer || !Array.isArray(value.offer.history)) {
+      throw new Error('Istoricul ofertării nu este valid.');
+    }
+    for (const event of value.offer.history.slice(initialState.offer.history.length)) {
+      if (!event || typeof event.at !== 'string' || !Number.isFinite(Date.parse(event.at))) {
+        throw new Error('Istoricul ofertării nu este valid.');
+      }
+      expected = applyAction(expected, event.action, event.at);
+    }
+  }
+  if (savedVersion >= 4) {
+    if (!value.lab || !Array.isArray(value.lab.history)) {
+      throw new Error('Istoricul laboratorului nu este valid.');
+    }
+    for (const event of value.lab.history.slice(initialState.lab.history.length)) {
+      if (!event || typeof event.at !== 'string' || !Number.isFinite(Date.parse(event.at))) {
+        throw new Error('Istoricul laboratorului nu este valid.');
+      }
+      expected = applyAction(expected, event.action, event.at);
+    }
+  }
   if (JSON.stringify(value) !== JSON.stringify(expected)) {
     throw new Error('Fișierul de stare este inconsistent cu istoricul simulării.');
   }
-  return value;
+  if (savedVersion === 4) return value;
+  return {
+    ...value,
+    schemaVersion: 4,
+    ...(savedVersion < 2 ? { service: structuredClone(initialState.service) } : {}),
+    ...(savedVersion < 3 ? { offer: structuredClone(initialState.offer) } : {}),
+    lab: structuredClone(initialState.lab),
+  };
 }

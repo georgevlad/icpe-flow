@@ -20,7 +20,7 @@ export async function startServer({ port = Number(process.env.PORT ?? process.en
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  startServer().then(({ port }) => {
+  startServer({ statePath: process.env.DEMO_STATE_PATH }).then(({ port }) => {
     console.log(`API demonstrativ local: http://127.0.0.1:${port}`);
   }).catch((error) => {
     console.error('API-ul nu a putut porni:', error.message);
